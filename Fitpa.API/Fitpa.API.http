@@ -1,6 +1,27 @@
-@Fitpa.API_HostAddress = http://localhost:5142
+@HostAddress = http://localhost:5142
 
-GET {{Fitpa.API_HostAddress}}/weatherforecast/
+### Testar a inserção de um peso (POST)
+POST {{HostAddress}}/api/pesagem
+Content-Type: application/json
+
+{
+  "data": "2026-07-13T12:00:00Z",
+  "peso": 91.75
+}
+
+### Testar a leitura dos pesos (GET)
+GET {{HostAddress}}/api/pesagem
 Accept: application/json
 
-###
+### Testar a atualização de um peso (PUT)
+PUT {{HostAddress}}/api/pesagem/2
+Content-Type: application/json
+
+{
+  "id": 2,
+  "data": "2026-07-13T12:00:00Z",
+  "peso": 92.00
+}
+
+### Testar a exclusão de um peso (DELETE)
+DELETE {{HostAddress}}/api/pesagem/1
