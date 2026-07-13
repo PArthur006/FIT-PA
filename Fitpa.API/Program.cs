@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore;
+using Fitpa.API.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -13,6 +16,9 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
    });
 });
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
