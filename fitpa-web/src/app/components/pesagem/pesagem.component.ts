@@ -48,4 +48,16 @@ export class PesagemComponent implements OnInit {
       error: (err) => console.error('Erro ao registrar pesagem:', err),
     });
   }
+
+  // Método para deletar uma pesagem existente
+  deletarPeso(id: number | undefined): void {
+    if (!id) return;
+
+    if (confirm('Tem certeza que deseja deletar esta pesagem?')) {
+      this.pesagemService.deletarPesagem(id).subscribe({
+        next: () => this.carregarPesagens(),
+        error: (err) => console.error('Erro ao deletar pesagem:', err),
+      });
+    }
+  }
 }
