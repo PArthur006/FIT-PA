@@ -14,6 +14,7 @@ export class PesagemComponent implements OnInit {
   pesagens: Pesagem[] = [];
   novoPeso: number | null = null;
   dataSelecionada: string = '';
+  dataMaxima: string = '';
   pesagemEmEdicao: Pesagem | null = null;
 
   constructor(private pesagemService: PesagemService) {}
@@ -21,6 +22,7 @@ export class PesagemComponent implements OnInit {
   ngOnInit(): void {
     this.carregarPesagens();
     this.dataSelecionada = this.obterDataAtualFormatada();
+    this.dataMaxima = this.obterDataAtualFormatada();
   }
 
   // Prepara a data atual no formato YYYY-MM-DD para o input
@@ -51,6 +53,12 @@ export class PesagemComponent implements OnInit {
       
       return mesmaData && !isMesmoRegistro;
     });
+
+    // Verifica se a data é maior que a data atual
+    if (this.dataSelecionada > this.obterDataAtualFormatada()) {
+      alert('Você não pode registrar um peso para uma data futura.');
+      return;
+    }
 
     if (dataJaExiste) {
       alert('Você já registrou um peso para este dia. Edite o registro existente na lista abaixo.');
