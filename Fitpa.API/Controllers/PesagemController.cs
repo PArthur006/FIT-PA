@@ -36,6 +36,7 @@ namespace Fitpa.API.Controllers
         [HttpPost]
         public async Task<IActionResult> RegistrarPesagem([FromBody] Pesagem pesagem)
         {
+            pesagem.UsuarioId = 1; // Força o uso do usuário 1 (temporário)
             var hoje = DateOnly.FromDateTime(DateTime.Now);
             if (pesagem.Data > hoje)
             {
@@ -74,6 +75,7 @@ namespace Fitpa.API.Controllers
                 return BadRequest("O ID da URL não corresponde ao ID do objeto.");
             }
 
+            pesagemAtualizada.UsuarioId = 1; // Força o uso do usuário 1 (temporário)
 
             /*
              * Proteção contra conflito

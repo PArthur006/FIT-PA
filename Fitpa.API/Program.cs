@@ -1,6 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Fitpa.API.Data;
 
+// Usings para autenticator
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 var builder = WebApplication.CreateBuilder(args);
 
 /*
@@ -31,6 +36,30 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 /*
+* Autenticação JWT
+* Configura o middleware para validar tokens JWT nas requisições.    
+*/
+var jwtKey = builder.Configuration["Jwt:Key"];
+var keyBytes = Encoding.ASCII.GetBytes(jwtKey!);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false; // Preciso mudar para true em produção
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero // Sem tolerância de tempo para expiração
+    };
+});
+
+/*
  * API MVC
  * Habilita o suporte aos controllers da aplicação.
  */
@@ -43,6 +72,12 @@ var app = builder.Build();
  * Aplica CORS antes do roteamento dos endpoints.
  */
 app.UseCors("PermitirFrontEnd");
+
+/*
+ * Middleware de autenticação
+ */
+app.UseAuthentication();
+app.UseAuthorization();
 
 /*
  * Ambiente de desenvolvimento
