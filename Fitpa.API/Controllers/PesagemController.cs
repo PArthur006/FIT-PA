@@ -30,6 +30,12 @@ namespace Fitpa.API.Controllers
         [HttpPost]
         public async Task<IActionResult> RegistrarPesagem([FromBody] Pesagem pesagem)
         {
+            // Bloqueia se a data já existir no banco
+            if (_context.Pesagens.Any(p => p.Data == pesagem.Data))
+            {
+                return BadRequest("Já existe uma pesagem registrada para esta data.");
+            }
+
             // Adiciona o novo registro no banco
             _context.Pesagens.Add(pesagem);
             await _context.SaveChangesAsync();
@@ -43,6 +49,12 @@ namespace Fitpa.API.Controllers
             if (id != pesagemAtualizada.ID)
             {
                 return BadRequest("O ID da URL não corresponde ao ID do objeto.");
+            }
+
+            // Bloqueia se a nova data escolhida já pertencer a outro registro
+            if (_context.Pesagens.Any(p => p.Data == pesagemAtualizada.Data && p.ID != id))
+            {
+                return BadRequest("Já existe uma pesagem registrada para esta data.");
             }
 
             _context.Entry(pesagemAtualizada).State = EntityState.Modified;
