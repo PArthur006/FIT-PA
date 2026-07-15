@@ -6,8 +6,12 @@ namespace Fitpa.API.Models
      */
     public class Pesagem
     {
-        public int ID { get; set; }
+        public int Id { get; set; }
         public DateOnly Data { get; set; }
         public decimal Peso { get; set; }
+
+        // Relacionamento com o usuário
+        public int UsuarioId { get; set; }
+        public Usuario? Usuario { get; set; }
     }
 }
