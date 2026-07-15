@@ -54,12 +54,12 @@ namespace Fitpa.API.Controllers
             _context.Pesagens.Add(pesagem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetPesagens), new {id = pesagem.ID}, pesagem);
+            return CreatedAtAction(nameof(GetPesagens), new { id = pesagem.Id }, pesagem);
         }
 
         /*
          * Atualização
-         * Confere data futura, consistência do ID e duplicidade de data antes de salvar.
+         * Confere data futura, consistência do Id e duplicidade de data antes de salvar.
          */
         [HttpPut("{id}")]
         public async Task<IActionResult> AtualizarPesagem(int id, [FromBody] Pesagem pesagemAtualizada)
@@ -69,7 +69,7 @@ namespace Fitpa.API.Controllers
             {
                 return BadRequest("Não é possível atualizar uma pesagem para uma data futura.");
             }
-            if (id != pesagemAtualizada.ID)
+            if (id != pesagemAtualizada.Id)
             {
                 return BadRequest("O ID da URL não corresponde ao ID do objeto.");
             }
@@ -79,7 +79,7 @@ namespace Fitpa.API.Controllers
              * Proteção contra conflito
              * Evita que a nova data colida com outro registro já existente.
              */
-            if (_context.Pesagens.Any(p => p.Data == pesagemAtualizada.Data && p.ID != id))
+            if (_context.Pesagens.Any(p => p.Data == pesagemAtualizada.Data && p.Id != id))
             {
                 return BadRequest("Já existe uma pesagem registrada para esta data.");
             }
@@ -92,7 +92,7 @@ namespace Fitpa.API.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Pesagens.Any(e => e.ID == id))
+                if (!_context.Pesagens.Any(e => e.Id == id))
                 {
                     return NotFound("Pesagem não encontrada.");
                 }
@@ -107,7 +107,7 @@ namespace Fitpa.API.Controllers
 
         /*
          * Exclusão
-         * Localiza o registro pelo ID e remove se ele existir.
+         * Localiza o registro pelo Id e remove se ele existir.
          */
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletarPesagem(int id)
