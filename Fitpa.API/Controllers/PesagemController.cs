@@ -30,6 +30,11 @@ namespace Fitpa.API.Controllers
         [HttpPost]
         public async Task<IActionResult> RegistrarPesagem([FromBody] Pesagem pesagem)
         {
+            var hoje = DateOnly.FromDateTime(DateTime.Now);
+            if (pesagem.Data > hoje)
+            {
+                return BadRequest("Não é possível registrar uma pesagem para uma data futura.");
+            }
             // Bloqueia se a data já existir no banco
             if (_context.Pesagens.Any(p => p.Data == pesagem.Data))
             {
@@ -46,6 +51,11 @@ namespace Fitpa.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> AtualizarPesagem(int id, [FromBody] Pesagem pesagemAtualizada)
         {
+            var hoje = DateOnly.FromDateTime(DateTime.Now);
+            if (pesagemAtualizada.Data > hoje)
+            {
+                return BadRequest("Não é possível atualizar uma pesagem para uma data futura.");
+            }
             if (id != pesagemAtualizada.ID)
             {
                 return BadRequest("O ID da URL não corresponde ao ID do objeto.");
