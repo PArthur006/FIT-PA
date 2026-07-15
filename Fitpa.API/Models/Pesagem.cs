@@ -1,5 +1,9 @@
 namespace Fitpa.API.Models
 {
+    /*
+     * Entidade de pesagem
+     * Representa um registro único armazenado no banco.
+     */
     public class Pesagem
     {
         public int ID { get; set; }

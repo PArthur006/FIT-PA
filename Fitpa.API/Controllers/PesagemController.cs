@@ -7,7 +7,6 @@ namespace Fitpa.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    
     public class PesagemController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -17,16 +16,23 @@ namespace Fitpa.API.Controllers
             _context = context;
         }
 
+        /*
+         * Consulta
+         * Retorna todas as pesagens em ordem decrescente de data.
+         */
         [HttpGet]
         public async Task<IActionResult> GetPesagens()
         {
-            // Busca todas as pesagens ordenadas pela data em ordem decrescente (Mais recente para a mais antiga)
             var pesagens = await _context.Pesagens
                 .OrderByDescending(p => p.Data)
                 .ToListAsync();
             return Ok(pesagens);
         }
 
+        /*
+         * Criação
+         * Valida data futura e impede duplicidade de registro para a mesma data.
+         */
         [HttpPost]
         public async Task<IActionResult> RegistrarPesagem([FromBody] Pesagem pesagem)
         {
@@ -35,19 +41,26 @@ namespace Fitpa.API.Controllers
             {
                 return BadRequest("Não é possível registrar uma pesagem para uma data futura.");
             }
-            // Bloqueia se a data já existir no banco
+
+            /*
+             * Regra de unicidade
+             * Cada data pode ter apenas um registro de pesagem.
+             */
             if (_context.Pesagens.Any(p => p.Data == pesagem.Data))
             {
                 return BadRequest("Já existe uma pesagem registrada para esta data.");
             }
 
-            // Adiciona o novo registro no banco
             _context.Pesagens.Add(pesagem);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetPesagens), new {id = pesagem.ID}, pesagem);
         }
 
+        /*
+         * Atualização
+         * Confere data futura, consistência do ID e duplicidade de data antes de salvar.
+         */
         [HttpPut("{id}")]
         public async Task<IActionResult> AtualizarPesagem(int id, [FromBody] Pesagem pesagemAtualizada)
         {
@@ -61,7 +74,11 @@ namespace Fitpa.API.Controllers
                 return BadRequest("O ID da URL não corresponde ao ID do objeto.");
             }
 
-            // Bloqueia se a nova data escolhida já pertencer a outro registro
+
+            /*
+             * Proteção contra conflito
+             * Evita que a nova data colida com outro registro já existente.
+             */
             if (_context.Pesagens.Any(p => p.Data == pesagemAtualizada.Data && p.ID != id))
             {
                 return BadRequest("Já existe uma pesagem registrada para esta data.");
@@ -85,9 +102,13 @@ namespace Fitpa.API.Controllers
                 }
             }
 
-            return NoContent(); // Retorna 204 No Content para indicar que a atualização foi bem-sucedida
+            return NoContent();
         }
 
+        /*
+         * Exclusão
+         * Localiza o registro pelo ID e remove se ele existir.
+         */
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletarPesagem(int id)
         {
@@ -100,7 +121,7 @@ namespace Fitpa.API.Controllers
             _context.Pesagens.Remove(pesagem);
             await _context.SaveChangesAsync();
 
-            return NoContent(); // Retorna 204 No Content para indicar que a exclusão foi bem-sucedida
+            return NoContent();
         }
     }
 }

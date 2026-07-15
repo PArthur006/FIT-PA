@@ -1,7 +1,10 @@
 <div class="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md border border-slate-200">
   <h1 class="text-2xl font-semibold text-slate-800 mb-6 tracking-tight">Controle de Peso</h1>
 
-  <!-- Área de Registro / Edição -->
+  <!--
+    Área de registro e edição
+    Reúne o campo de data, o campo de peso e os botões de ação.
+  -->
   <div class="flex flex-col sm:flex-row gap-3 mb-8 items-start">
     <input
       type="date"
@@ -38,7 +41,10 @@
     </div>
   </div>
 
-  <!-- Histórico -->
+  <!--
+    Histórico de pesagens
+    Lista os registros salvos com data e peso.
+  -->
   <h2 class="text-lg font-medium text-slate-700 mb-4">Histórico Recente</h2>
 
   <div class="bg-slate-50 rounded-md border border-slate-200">
@@ -47,12 +53,16 @@
         *ngFor="let p of pesagens"
         class="flex justify-between items-center px-4 py-3 group hover:bg-slate-100 transition-colors"
       >
+        <!-- Dados do registro -->
         <div class="flex flex-col">
           <span class="font-semibold text-slate-800">{{ p.peso }} kg</span>
           <span class="text-slate-500 text-xs">{{ p.data | date: 'dd/MM/yyyy' }}</span>
         </div>
 
-        <!-- Ações: Editar e Excluir -->
+        <!--
+          Ações do registro
+          Permite editar ou excluir a pesagem selecionada.
+        -->
         <div class="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             (click)="editarPeso(p)"

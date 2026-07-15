@@ -11,6 +11,10 @@ import { Pesagem } from '../../models/pesagem.model';
   templateUrl: './pesagem.component.html',
 })
 export class PesagemComponent implements OnInit {
+  /*
+   * Estado da tela
+   * Guarda os registros carregados e os valores do formulário.
+   */
   pesagens: Pesagem[] = [];
   novoPeso: number | null = null;
   dataSelecionada: string = '';
@@ -19,13 +23,20 @@ export class PesagemComponent implements OnInit {
 
   constructor(private pesagemService: PesagemService) {}
 
+  /*
+   * Inicialização
+   * Carrega os registros e prepara a data padrão para o formulário.
+   */
   ngOnInit(): void {
     this.carregarPesagens();
     this.dataSelecionada = this.obterDataAtualFormatada();
     this.dataMaxima = this.obterDataAtualFormatada();
   }
 
-  // Prepara a data atual no formato YYYY-MM-DD para o input
+  /*
+   * Utilitário de data
+   * Formata a data atual no padrão YYYY-MM-DD para uso no input.
+   */
   obterDataAtualFormatada(): string {
     const agora = new Date();
     agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
@@ -43,18 +54,20 @@ export class PesagemComponent implements OnInit {
     });
   }
 
+  /*
+   * Salvamento
+   * Valida duplicidade e data futura antes de criar ou atualizar um registro.
+   */
   salvarPeso(): void {
     if (!this.novoPeso || !this.dataSelecionada) return;
 
-    // Verifica se a data já existe no array carregado em tela
-    const dataJaExiste = this.pesagens.some(p => {
+    const dataJaExiste = this.pesagens.some((p) => {
       const mesmaData = p.data === this.dataSelecionada;
       const isMesmoRegistro = this.pesagemEmEdicao && this.pesagemEmEdicao.id === p.id;
-      
+
       return mesmaData && !isMesmoRegistro;
     });
 
-    // Verifica se a data é maior que a data atual
     if (this.dataSelecionada > this.obterDataAtualFormatada()) {
       alert('Você não pode registrar um peso para uma data futura.');
       return;
@@ -77,7 +90,7 @@ export class PesagemComponent implements OnInit {
         error: (err) => {
           console.error('Erro ao atualizar pesagem:', err);
           alert('Erro ao atualizar. Verifique se a data já existe.');
-        }
+        },
       });
     } else {
       const novaPesagem: Pesagem = {
@@ -90,19 +103,26 @@ export class PesagemComponent implements OnInit {
         error: (err) => {
           console.error('Erro ao registrar pesagem:', err);
           alert('Erro ao registrar. Verifique se a data já existe.');
-        }
+        },
       });
     }
   }
 
+  /*
+   * Edição
+   * Carrega os valores do item selecionado no formulário.
+   */
   editarPeso(p: Pesagem): void {
     this.pesagemEmEdicao = p;
     this.novoPeso = p.peso;
 
-    // Converte a data do banco para o formato do input local
     this.dataSelecionada = this.extrairDataParaInput(p.data);
   }
 
+  /*
+   * Exclusão
+   * Remove um registro após confirmação do usuário.
+   */
   deletarPeso(id: number | undefined): void {
     if (!id) return;
 
@@ -117,6 +137,10 @@ export class PesagemComponent implements OnInit {
     }
   }
 
+  /*
+   * Cancelamento
+   * Limpa o estado de edição e restaura os valores padrão do formulário.
+   */
   cancelarEdicao(): void {
     this.pesagemEmEdicao = null;
     this.novoPeso = null;
