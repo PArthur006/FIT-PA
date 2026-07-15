@@ -19,7 +19,7 @@ export class PesagemService {
     return this.http.post<Pesagem>(this.apiUrl, pesagem);
   }
 
-  editarPesagem(id: number, pesagem: Pesagem): Observable<Pesagem> {
+  atualizarPesagem(id: number, pesagem: Pesagem): Observable<Pesagem> {
     return this.http.put<Pesagem>(`${this.apiUrl}/${id}`, pesagem);
   }
 
