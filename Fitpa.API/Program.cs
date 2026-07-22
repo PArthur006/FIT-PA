@@ -1,23 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Fitpa.API.Data;
-
-// Usings para autenticator
+using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-/*
- * Serviços da aplicação
- * Registra OpenAPI, CORS, banco de dados e controllers.
- */
-builder.Services.AddOpenApi();
-
-/*
- * Política de CORS
- * Permite chamadas do front-end local durante o desenvolvimento.
- */
+/* Política de CORS */
 builder.Services.AddCors(options =>
 {
    options.AddPolicy("PermitirFrontEnd", policy =>
@@ -28,23 +18,17 @@ builder.Services.AddCors(options =>
    });
 });
 
-/*
- * Persistência
- * Configura o DbContext com a conexão PostgreSQL definida em appsettings.
- */
+/* Persistência */
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-/*
-* Autenticação JWT
-* Configura o middleware para validar tokens JWT nas requisições.    
-*/
+/* Autenticação JWT */
 var jwtKey = builder.Configuration["Jwt:Key"];
 var keyBytes = Encoding.ASCII.GetBytes(jwtKey!);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false; // Preciso mudar para true em produção
+    options.RequireHttpsMetadata = false; 
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -55,43 +39,58 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         ValidateAudience = true,
         ValidAudience = builder.Configuration["Jwt:Audience"],
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero // Sem tolerância de tempo para expiração
+        ClockSkew = TimeSpan.Zero
     };
 });
 
-/*
- * API MVC
- * Habilita o suporte aos controllers da aplicação.
- */
+/* API MVC */
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+/* Swagger (Swashbuckle) com suporte a JWT */
+builder.Services.AddSwaggerGen(c => 
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Insira o token JWT no campo abaixo."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
-/*
- * Pipeline HTTP
- * Aplica CORS antes do roteamento dos endpoints.
- */
+/* Interface visual do Swagger */
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
 app.UseCors("PermitirFrontEnd");
 
-/*
- * Middleware de autenticação
- */
 app.UseAuthentication();
 app.UseAuthorization();
 
-/*
- * Ambiente de desenvolvimento
- * Expõe a documentação OpenAPI apenas em dev.
- */
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-/*
- * Rotas da API
- * Mapeia os controllers para receber as requisições HTTP.
- */
 app.MapControllers();
 
 app.Run();
