@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Pesagem } from './pesagem';
+import { Pesagem } from './pesagem.pages';
 
 describe('Pesagem', () => {
   let component: Pesagem;
