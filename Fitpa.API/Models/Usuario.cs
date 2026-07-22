@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Fitpa.API.Models
 {
     public class Usuario
@@ -11,6 +13,7 @@ namespace Fitpa.API.Models
         public bool IsMfaEnabled { get; set; } = false;
 
         // Relação 1:N com as pesagens
+        [JsonIgnore] // Evita referência circular durante a serialização
         public ICollection<Pesagem> Pesagens { get; set; } = new List<Pesagem>();
     }
 }

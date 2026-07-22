@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Fitpa.API.Models
 {
     /*
@@ -12,6 +14,7 @@ namespace Fitpa.API.Models
 
         // Relacionamento com o usuário
         public int UsuarioId { get; set; }
+        [JsonIgnore] // Evita referência circular durante a serialização
         public Usuario? Usuario { get; set; }
     }
 }
