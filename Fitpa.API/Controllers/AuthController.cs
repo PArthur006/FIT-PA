@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using OtpNet;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Fitpa.API.Controllers
 {
@@ -49,9 +51,20 @@ namespace Fitpa.API.Controllers
             if (usuario == null || !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
                 return Unauthorized("Usuário ou senha inválidos.");
             
-            // Cria o token JWT
-            var token = CriarTokenJwt(usuario);
+            // Verifica se a conta tem MFA Ativo
+            if (usuario.IsMfaEnabled)
+            {
+                if (string.IsNullOrEmpty(request.MfaCode))
+                    return Unauthorized(new { requiresMfa = true, mensagem = "Código MFA obrigatório" });
+                
+                var totp = new Totp(Base32Encoding.ToBytes(usuario.TotpSecret));
+                bool isValido = totp.VerifyTotp(request.MfaCode, out long timeStepMatched, window: new VerificationWindow(2, 2));
 
+                if (!isValido)
+                    return Unauthorized("Código MFA inválido.");
+            }
+
+            var token = CriarTokenJwt(usuario);
             return Ok(new { token });
         }
 
@@ -79,6 +92,68 @@ namespace Fitpa.API.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
 
             return tokenHandler.WriteToken(token);
+        }
+
+        [Authorize]
+        [HttpPost("mfa/gerar")]
+        public async Task<IActionResult> GerarChaveMfa()
+        {
+            // 1. Pega o ID do usuário através do token JWT
+            var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (claimId == null) return Unauthorized();
+            var usuarioId = int.Parse(claimId);
+
+            var usuario = await _context.Usuarios.FindAsync(usuarioId);
+            if (usuario == null) return NotFound("Usuário não encontrado.");
+
+            // 2. Se já tiver MFA ativo, não pode gerar outro
+            if (usuario.IsMfaEnabled)
+                return BadRequest("MFA já está ativado para esta conta.");
+            
+            // 3. Gera a chave secreta em Base 32
+            var secretKey = KeyGeneration.GenerateRandomKey(20);
+            var base32Secret = Base32Encoding.ToString(secretKey);
+
+            // 4. Salva no banco
+            usuario.TotpSecret = base32Secret;
+            await _context.SaveChangesAsync();
+
+            // 5. Monta a URI que será convertida em QR Code pelo front-end
+            var issuer = "FitPA";
+            var uri = $"otpauth://totp/{issuer}:{usuario.Username}?secret={base32Secret}&issuer={issuer}";
+
+            return Ok(new
+            {
+                mensagem = "Chave gerada. Escaneie o QR Code no app Authenticator.",
+                qrCodeUri = uri,
+                chaveManual = base32Secret
+            });
+        }
+
+        [Authorize]
+        [HttpPost("mfa/ativar")]
+        public async Task<IActionResult> AtivarMfa([FromBody] MfaAtivarDto request)
+        {
+            var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (claimId == null) return Unauthorized();
+            var usuarioId = int.Parse(claimId);
+
+            var usuario = await _context.Usuarios.FindAsync(usuarioId);
+            if (usuario == null || string.IsNullOrEmpty(usuario.TotpSecret))
+                return BadRequest("MFA não foi iniciado.");
+
+            // Usa a biblioteca OtpNet para validar os 6 digitos contra a chave secreta
+            var totp = new Totp(Base32Encoding.ToBytes(usuario.TotpSecret));
+
+            // Window 2, dando uma tolerância de +/- 1 minuto para relógios dessincronizados
+            bool isValido = totp.VerifyTotp(request.Codigo, out long timeStepMatched, window: new VerificationWindow(2, 2));
+
+            if (!isValido) return BadRequest("Código MFA inválido.");
+
+            usuario.IsMfaEnabled = true;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensagem = "MFA ativado com sucesso." });
         }
     }
 }

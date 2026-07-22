@@ -2,9 +2,12 @@ using Fitpa.API.Data;
 using Fitpa.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Fitpa.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class PesagemController : ControllerBase
@@ -21,12 +24,13 @@ namespace Fitpa.API.Controllers
          * Retorna todas as pesagens em ordem decrescente de data.
          */
         [HttpGet]
-        public async Task<IActionResult> GetPesagens()
+        public async Task<ActionResult<List<Pesagem>>> GetPesagens()
         {
-            var pesagens = await _context.Pesagens
+            var usuarioId = ObterUsuarioIdDoToken();
+            return await _context.Pesagens
+                .Where(p => p.UsuarioId == usuarioId)
                 .OrderByDescending(p => p.Data)
                 .ToListAsync();
-            return Ok(pesagens);
         }
 
         /*
@@ -36,7 +40,8 @@ namespace Fitpa.API.Controllers
         [HttpPost]
         public async Task<IActionResult> RegistrarPesagem([FromBody] Pesagem pesagem)
         {
-            pesagem.UsuarioId = 1; // Força o uso do usuário 1 (temporário)
+            var usuarioId = ObterUsuarioIdDoToken();
+            pesagem.UsuarioId = usuarioId;
             var hoje = DateOnly.FromDateTime(DateTime.Now);
             if (pesagem.Data > hoje)
             {
@@ -74,8 +79,13 @@ namespace Fitpa.API.Controllers
             {
                 return BadRequest("O ID da URL não corresponde ao ID do objeto.");
             }
+            var usuarioId = ObterUsuarioIdDoToken();
+            if (!await _context.Pesagens.AnyAsync(p => p.Id == id && p.UsuarioId == usuarioId))
+            {
+                return Forbid(); // Retorna 403 (Proibido) se tentar mexer na pesagem de outro
+            }
 
-            pesagemAtualizada.UsuarioId = 1; // Força o uso do usuário 1 (temporário)
+            pesagemAtualizada.UsuarioId = usuarioId; // Usa o ID do usuário autenticado
 
             /*
              * Proteção contra conflito
@@ -119,11 +129,22 @@ namespace Fitpa.API.Controllers
             {
                 return NotFound("Pesagem não encontrada.");
             }
+            var usuarioId = ObterUsuarioIdDoToken();
+            if (!await _context.Pesagens.AnyAsync(p => p.Id == id && p.UsuarioId == usuarioId))
+            {
+                return Forbid(); // Retorna 403 (Proibido) se tentar mexer na pesagem de outro
+            }
 
             _context.Pesagens.Remove(pesagem);
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private int ObterUsuarioIdDoToken()
+        {
+            var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return int.Parse(claimId!);
         }
     }
 }
