@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PesagemService } from '../../services/pesagem.service';
 import { Pesagem } from '../../models/pesagem.model';
@@ -11,32 +11,31 @@ import { Pesagem } from '../../models/pesagem.model';
   templateUrl: './pesagem.component.html',
 })
 export class PesagemComponent implements OnInit {
-  /*
-   * Estado da tela
-   * Guarda os registros carregados e os valores do formulário.
-   */
   pesagens: Pesagem[] = [];
   novoPeso: number | null = null;
   dataSelecionada: string = '';
   dataMaxima: string = '';
   pesagemEmEdicao: Pesagem | null = null;
+  private isBrowser: boolean;
 
-  constructor(private pesagemService: PesagemService) {}
-
-  /*
-   * Inicialização
-   * Carrega os registros e prepara a data padrão para o formulário.
-   */
-  ngOnInit(): void {
-    this.carregarPesagens();
-    this.dataSelecionada = this.obterDataAtualFormatada();
-    this.dataMaxima = this.obterDataAtualFormatada();
+  constructor(
+    private pesagemService: PesagemService,
+    @Inject(PLATFORM_ID) platformId: Object,
+    private cdr: ChangeDetectorRef // Motor de renderização manual
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
   }
 
-  /*
-   * Utilitário de data
-   * Formata a data atual no padrão YYYY-MM-DD para uso no input.
-   */
+  ngOnInit(): void {
+    this.dataSelecionada = this.obterDataAtualFormatada();
+    this.dataMaxima = this.obterDataAtualFormatada();
+    
+    // Bloqueio anti-SSR: Impede o servidor Node.js de disparar chamadas HTTP não autenticadas
+    if (this.isBrowser) {
+      this.carregarPesagens();
+    }
+  }
+
   obterDataAtualFormatada(): string {
     const agora = new Date();
     agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
@@ -48,23 +47,23 @@ export class PesagemComponent implements OnInit {
   }
 
   carregarPesagens(): void {
+    if (!this.isBrowser) return;
+
     this.pesagemService.getPesagens().subscribe({
-      next: (dados) => (this.pesagens = dados),
+      next: (dados) => {
+        this.pesagens = dados;
+        this.cdr.detectChanges(); // Força o HTML a redesenhar a lista de pesos
+      },
       error: (err) => console.error('Erro ao buscar pesagens:', err),
     });
   }
 
-  /*
-   * Salvamento
-   * Valida duplicidade e data futura antes de criar ou atualizar um registro.
-   */
   salvarPeso(): void {
     if (!this.novoPeso || !this.dataSelecionada) return;
 
     const dataJaExiste = this.pesagens.some((p) => {
       const mesmaData = p.data === this.dataSelecionada;
       const isMesmoRegistro = this.pesagemEmEdicao && this.pesagemEmEdicao.id === p.id;
-
       return mesmaData && !isMesmoRegistro;
     });
 
@@ -108,21 +107,13 @@ export class PesagemComponent implements OnInit {
     }
   }
 
-  /*
-   * Edição
-   * Carrega os valores do item selecionado no formulário.
-   */
   editarPeso(p: Pesagem): void {
     this.pesagemEmEdicao = p;
     this.novoPeso = p.peso;
-
     this.dataSelecionada = this.extrairDataParaInput(p.data);
+    this.cdr.detectChanges(); // Atualiza os inputs instantaneamente ao clicar no botão
   }
 
-  /*
-   * Exclusão
-   * Remove um registro após confirmação do usuário.
-   */
   deletarPeso(id: number | undefined): void {
     if (!id) return;
 
@@ -137,14 +128,11 @@ export class PesagemComponent implements OnInit {
     }
   }
 
-  /*
-   * Cancelamento
-   * Limpa o estado de edição e restaura os valores padrão do formulário.
-   */
   cancelarEdicao(): void {
     this.pesagemEmEdicao = null;
     this.novoPeso = null;
     this.dataSelecionada = this.obterDataAtualFormatada();
+    this.cdr.detectChanges(); // Limpa os inputs da tela imediatamente
     this.carregarPesagens();
   }
 }
