@@ -32,11 +32,21 @@ export class LoginComponent {
     this.carregando = true;
     this.cdr.detectChanges(); // Obriga o HTML a mostrar o "Processando..."
 
-    this.authService.login(this.credenciais).subscribe({
+    // Injeta o token de confiança se ele existir
+    const payload = {
+      ...this.credenciais,
+      trustToken: this.authService.obterTrustToken()
+    };
+
+    this.authService.login(payload).subscribe({
       next: (res) => {
         this.authService.salvarToken(res.token);
+        if (res.trustToken) {
+          this.authService.salvarTrustToken(res.trustToken);
+        }
+
         this.carregando = false;
-        this.router.navigate(['/pesagem']); 
+        this.router.navigate(['/pesagem']);        
       },
       error: (err) => {
         console.log("1. Erro interceptado do C#", err);

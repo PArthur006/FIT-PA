@@ -48,4 +48,19 @@ export class AuthService {
   estaLogado(): boolean {
     return this.obterToken() !== null;
   }
+
+  // Guarda o Trust Token no localStorage
+  salvarTrustToken(token: string) {
+    if (this.isBrowser) {
+      localStorage.setItem('mfa_trust_token', token);
+    }
+  }
+
+  // Pega o Trust Token do localStorage
+  obterTrustToken(): string | null {
+    if (this.isBrowser) {
+      return localStorage.getItem('mfa_trust_token');
+    }
+    return null;
+  }
 }

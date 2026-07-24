@@ -185,25 +185,30 @@ namespace Fitpa.API.Controllers
         {
             try
             {
-               var tokenHandler = new JwtSecurityTokenHandler();
-               var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]!);
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]!);
 
-               tokenHandler.ValidateToken(token, new TokenValidationParameters
-               {
-                   ValidateIssuerSigningKey = true,
-                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                     ValidateIssuer = false, // Ignorado para simplificação
-                     ValidateAudience = false,
-                     ClockSkew = TimeSpan.Zero
-               }, out SecurityToken validatedToken);
-               
-               var jwtToken = (JwtSecurityToken)validatedToken;
-               var tokenUsername = jwtToken.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
-               var tokenType = jwtToken.Claims.First(x => x.Type == "TokenType").Value;
+                // Extrai a identidade (Principal) diretamente da validação, é muito mais seguro
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false, 
+                    ValidateAudience = false,
+                    ValidateLifetime = true, // Garante que a regra dos 7 dias seja respeitada
+                    ClockSkew = TimeSpan.Zero
+                }, out _);
 
-               return tokenUsername == username && tokenType == "MfaTrust" ;
-            } catch
+                // FindFirst tenta achar. Se não achar, devolve null em vez de explodir o código.
+                var tokenUsername = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var tokenType = principal.FindFirst("TokenType")?.Value;
+
+                return tokenUsername == username && tokenType == "MfaTrust";
+            }
+            catch (Exception ex)
             {
+                // O RAIO-X: Se o token for rejeitado agora, o motivo exato aparecerá no terminal do C#
+                Console.WriteLine($"\n[FALHA TRUST TOKEN]: {ex.Message}\n");
                 return false;
             }
         }
