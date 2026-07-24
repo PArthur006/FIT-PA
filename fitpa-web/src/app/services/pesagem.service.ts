@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Pesagem } from '../models/pesagem.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +12,7 @@ export class PesagemService {
    * Endpoint base da API
    * Centraliza a URL usada em todas as operações de pesagem.
    */
-  private apiUrl = 'http://localhost:5142/api/pesagem';
+  private apiUrl = `${environment.apiUrl}/pesagem`;
 
   constructor(private http: HttpClient) {}
 
