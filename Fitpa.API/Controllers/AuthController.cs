@@ -47,11 +47,19 @@ namespace Fitpa.API.Controllers
         {
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Username == request.Username);
 
-            // Correção 1: Transformando a mensagem em um objeto JSON
+            // Transformando a mensagem em um objeto JSON
             if (usuario == null || !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
                 return Unauthorized(new { mensagem = "Usuário ou senha inválidos." });
 
-            if (usuario.IsMfaEnabled)
+            // 1. Verifica se o usuário mandou um TrustToken válido
+            bool isDispositivoConfiavel = false;
+            if (!string.IsNullOrEmpty(request.TrustToken))
+            {
+                isDispositivoConfiavel = IsTrustTokenValido(request.TrustToken, usuario.Username);
+            }
+
+            // 2. Exige o MFA se o dispositivo não for confiável
+            if (usuario.IsMfaEnabled && !isDispositivoConfiavel)
             {
                 if (string.IsNullOrEmpty(request.MfaCode))
                     return Unauthorized(new { requiresMfa = true, mensagem = "Código MFA obrigatório." });
@@ -59,13 +67,30 @@ namespace Fitpa.API.Controllers
                 var totp = new Totp(Base32Encoding.ToBytes(usuario.TotpSecret));
                 bool isValido = totp.VerifyTotp(request.MfaCode, out long timeStepMatched, window: new VerificationWindow(2, 2));
 
-                // Correção 2: Transformando a mensagem em um objeto JSON
+                // Transformando a mensagem em um objeto JSON
                 if (!isValido)
                     return Unauthorized(new { mensagem = "Código MFA inválido." });
             }
 
+            // 3. Gera o Token Principal
             var token = CriarTokenJwt(usuario);
-            return Ok(new { token });
+
+            // 4. Gera o Token de Confiança (7 dias)
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]!);
+            var trustTokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, usuario.Username),
+                    new Claim("TokenType", "MfaTrust")
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var trustToken = tokenHandler.WriteToken(tokenHandler.CreateToken(trustTokenDescriptor));
+
+            return Ok(new { token, trustToken });
         }
 
         private string CriarTokenJwt(Usuario usuario)
@@ -154,6 +179,33 @@ namespace Fitpa.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { mensagem = "MFA ativado com sucesso." });
+        }
+
+        private bool IsTrustTokenValido(string token, string username)
+        {
+            try
+            {
+               var tokenHandler = new JwtSecurityTokenHandler();
+               var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]!);
+
+               tokenHandler.ValidateToken(token, new TokenValidationParameters
+               {
+                   ValidateIssuerSigningKey = true,
+                     IssuerSigningKey = new SymmetricSecurityKey(key),
+                     ValidateIssuer = false, // Ignorado para simplificação
+                     ValidateAudience = false,
+                     ClockSkew = TimeSpan.Zero
+               }, out SecurityToken validatedToken);
+               
+               var jwtToken = (JwtSecurityToken)validatedToken;
+               var tokenUsername = jwtToken.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
+               var tokenType = jwtToken.Claims.First(x => x.Type == "TokenType").Value;
+
+               return tokenUsername == username && tokenType == "MfaTrust" ;
+            } catch
+            {
+                return false;
+            }
         }
     }
 }
