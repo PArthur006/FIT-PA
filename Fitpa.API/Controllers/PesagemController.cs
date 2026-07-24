@@ -52,7 +52,7 @@ namespace Fitpa.API.Controllers
              * Regra de unicidade
              * Cada data pode ter apenas um registro de pesagem.
              */
-            if (_context.Pesagens.Any(p => p.Data == pesagem.Data))
+            if (_context.Pesagens.Any(p => p.Data == pesagem.Data && p.UsuarioId == usuarioId))
             {
                 return BadRequest("Já existe uma pesagem registrada para esta data.");
             }
@@ -91,7 +91,7 @@ namespace Fitpa.API.Controllers
              * Proteção contra conflito
              * Evita que a nova data colida com outro registro já existente.
              */
-            if (_context.Pesagens.Any(p => p.Data == pesagemAtualizada.Data && p.Id != id))
+            if (_context.Pesagens.Any(p => p.Data == pesagemAtualizada.Data && p.Id != id && p.UsuarioId == usuarioId))
             {
                 return BadRequest("Já existe uma pesagem registrada para esta data.");
             }

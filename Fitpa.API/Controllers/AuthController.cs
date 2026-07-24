@@ -47,21 +47,21 @@ namespace Fitpa.API.Controllers
         {
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Username == request.Username);
 
-            // Verifica se o user existe e se a senha está correta
+            // Correção 1: Transformando a mensagem em um objeto JSON
             if (usuario == null || !BCrypt.Net.BCrypt.Verify(request.Password, usuario.PasswordHash))
-                return Unauthorized("Usuário ou senha inválidos.");
-            
-            // Verifica se a conta tem MFA Ativo
+                return Unauthorized(new { mensagem = "Usuário ou senha inválidos." });
+
             if (usuario.IsMfaEnabled)
             {
                 if (string.IsNullOrEmpty(request.MfaCode))
-                    return Unauthorized(new { requiresMfa = true, mensagem = "Código MFA obrigatório" });
-                
+                    return Unauthorized(new { requiresMfa = true, mensagem = "Código MFA obrigatório." });
+
                 var totp = new Totp(Base32Encoding.ToBytes(usuario.TotpSecret));
                 bool isValido = totp.VerifyTotp(request.MfaCode, out long timeStepMatched, window: new VerificationWindow(2, 2));
 
+                // Correção 2: Transformando a mensagem em um objeto JSON
                 if (!isValido)
-                    return Unauthorized("Código MFA inválido.");
+                    return Unauthorized(new { mensagem = "Código MFA inválido." });
             }
 
             var token = CriarTokenJwt(usuario);
