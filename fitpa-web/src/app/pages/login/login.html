@@ -1,1 +1,68 @@
-<p>login works!</p>
+<div class="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans text-slate-300">
+  
+  <!-- Card de Login -->
+  <div class="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-8 w-full max-w-md">
+    
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-blue-500 tracking-tight">FitPA</h1>
+      <p class="text-slate-500 text-sm mt-1">Acesso ao Sistema</p>
+    </div>
+
+    <!-- Alertas de Erro -->
+    <div *ngIf="erro" class="mb-6 p-3 bg-red-950/50 border border-red-900 text-red-400 text-sm rounded-lg text-center">
+      {{ erro }}
+    </div>
+
+    <form (ngSubmit)="entrar()" #loginForm="ngForm" class="space-y-5">
+      
+      <!-- Usuário -->
+      <div>
+        <label class="block text-sm font-medium text-slate-400 mb-1">Usuário</label>
+        <input 
+          type="text" 
+          name="username" 
+          [(ngModel)]="credenciais.username" 
+          [disabled]="precisaMfa || carregando"
+          class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+          placeholder="Digite seu usuário"
+          required>
+      </div>
+
+      <!-- Senha -->
+      <div>
+        <label class="block text-sm font-medium text-slate-400 mb-1">Senha</label>
+        <input 
+          type="password" 
+          name="password" 
+          [(ngModel)]="credenciais.password" 
+          [disabled]="precisaMfa || carregando"
+          class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+          placeholder="••••••••"
+          required>
+      </div>
+
+      <!-- MFA (Só aparece se precisaMfa for true) -->
+      <div *ngIf="precisaMfa" class="pt-4 border-t border-slate-800">
+        <label class="block text-sm font-medium text-blue-400 mb-1">Código Authenticator</label>
+        <input 
+          type="text" 
+          name="mfaCode" 
+          [(ngModel)]="credenciais.mfaCode" 
+          [disabled]="carregando"
+          autocomplete="off"
+          maxlength="6"
+          class="w-full bg-slate-950 border border-blue-900/50 rounded-lg px-4 py-2.5 text-blue-100 text-center tracking-widest font-mono text-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+          placeholder="000000">
+      </div>
+
+      <!-- Botão Submit -->
+      <button 
+        type="submit" 
+        [disabled]="carregando"
+        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2">
+        {{ carregando ? 'Processando...' : (precisaMfa ? 'Validar Código' : 'Entrar') }}
+      </button>
+      
+    </form>
+  </div>
+</div>
