@@ -7,7 +7,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-/* Política de CORS */
+/*
+ * Política de CORS
+ * Libera o front-end local para consumir a API.
+ */
 builder.Services.AddCors(options =>
 {
    options.AddPolicy("PermitirFrontEnd", policy =>
@@ -18,11 +21,17 @@ builder.Services.AddCors(options =>
    });
 });
 
-/* Persistência */
+/*
+ * Persistência
+ * Configura o contexto do banco com PostgreSQL.
+ */
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-/* Autenticação JWT */
+/*
+ * Autenticação JWT
+ * Configura a validação dos tokens usados pela API.
+ */
 var jwtKey = builder.Configuration["Jwt:Key"];
 var keyBytes = Encoding.ASCII.GetBytes(jwtKey!);
 
@@ -43,11 +52,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
     };
 });
 
-/* API MVC */
+/*
+ * API MVC
+ * Registra os controllers e os metadados necessários.
+ */
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-/* Swagger (Swashbuckle) com suporte a JWT */
+/*
+ * Swagger (Swashbuckle) com suporte a JWT
+ * Expõe a documentação interativa com autenticação via Bearer token.
+ */
 builder.Services.AddSwaggerGen(c => 
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -78,7 +93,10 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-/* Interface visual do Swagger */
+/*
+ * Interface visual do Swagger
+ * Exibe a documentação apenas no ambiente de desenvolvimento.
+ */
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

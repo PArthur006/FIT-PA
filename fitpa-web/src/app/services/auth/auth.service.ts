@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private apiUrl = 'http://localhost:5142/api/Auth';
@@ -12,24 +12,33 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    @Inject(PLATFORM_ID) platformId: Object
+    @Inject(PLATFORM_ID) platformId: Object,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
-  // Dispara o usuário e senha para a API
+  /*
+   * Login
+   * Envia as credenciais para a API e inicia a autenticação.
+   */
   login(credenciais: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, credenciais);
   }
 
-  // Guarda o Token JWT no localStorage
+  /*
+   * Token JWT
+   * Salva o token principal no localStorage do navegador.
+   */
   salvarToken(token: string) {
     if (this.isBrowser) {
       localStorage.setItem('jwt_token', token);
     }
   }
 
-  // Pega o Token JWT do localStorage
+  /*
+   * Token JWT
+   * Recupera o token principal salvo no localStorage.
+   */
   obterToken(): string | null {
     if (this.isBrowser) {
       return localStorage.getItem('jwt_token');
@@ -37,26 +46,38 @@ export class AuthService {
     return null;
   }
 
-  // Remove o Token JWT do localStorage
+  /*
+   * Sessão
+   * Remove o token principal do localStorage ao sair.
+   */
   sair() {
     if (this.isBrowser) {
       localStorage.removeItem('jwt_token');
     }
   }
 
-  // Verifica se o usuário está logado
+  /*
+   * Sessão
+   * Verifica se existe token salvo para indicar autenticação ativa.
+   */
   estaLogado(): boolean {
     return this.obterToken() !== null;
   }
 
-  // Guarda o Trust Token no localStorage
+  /*
+   * Trust Token
+   * Salva o token de confiança usado no fluxo de MFA.
+   */
   salvarTrustToken(token: string) {
     if (this.isBrowser) {
       localStorage.setItem('mfa_trust_token', token);
     }
   }
 
-  // Pega o Trust Token do localStorage
+  /*
+   * Trust Token
+   * Recupera o token de confiança salvo no localStorage.
+   */
   obterTrustToken(): string | null {
     if (this.isBrowser) {
       return localStorage.getItem('mfa_trust_token');

@@ -6,4 +6,8 @@ import { Component } from '@angular/core';
   templateUrl: './pesagem.pages.html',
   styleUrl: './pesagem.pages.css',
 })
+/*
+ * Tela de Pesagem
+ * Componente base da página de pesagem.
+ */
 export class Pesagem {}

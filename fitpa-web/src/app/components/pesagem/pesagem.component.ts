@@ -21,43 +21,62 @@ export class PesagemComponent implements OnInit {
   constructor(
     private pesagemService: PesagemService,
     @Inject(PLATFORM_ID) platformId: Object,
-    private cdr: ChangeDetectorRef // Motor de renderização manual
+    private cdr: ChangeDetectorRef,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
+  /*
+   * Inicialização
+   * Configura as datas da tela e carrega as pesagens apenas no navegador.
+   */
   ngOnInit(): void {
     this.dataSelecionada = this.obterDataAtualFormatada();
     this.dataMaxima = this.obterDataAtualFormatada();
-    
-    // Bloqueio anti-SSR: Impede o servidor Node.js de disparar chamadas HTTP não autenticadas
+
     if (this.isBrowser) {
       this.carregarPesagens();
     }
   }
 
+  /*
+   * Data atual
+   * Retorna a data do dia no formato compatível com input date.
+   */
   obterDataAtualFormatada(): string {
     const agora = new Date();
     agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
     return agora.toISOString().slice(0, 10);
   }
 
+  /*
+   * Data para edição
+   * Extrai a parte da data usada pelo campo de formulário.
+   */
   private extrairDataParaInput(data: string): string {
     return data.slice(0, 10);
   }
 
+  /*
+   * Carregamento
+   * Busca as pesagens da API e atualiza a lista exibida.
+   */
   carregarPesagens(): void {
     if (!this.isBrowser) return;
 
     this.pesagemService.getPesagens().subscribe({
       next: (dados) => {
         this.pesagens = dados;
-        this.cdr.detectChanges(); // Força o HTML a redesenhar a lista de pesos
+        this.cdr.detectChanges();
       },
       error: (err) => console.error('Erro ao buscar pesagens:', err),
     });
   }
 
+  /*
+   * Salvamento
+   * Valida data, evita duplicidade e decide entre criar ou atualizar.
+   */
   salvarPeso(): void {
     if (!this.novoPeso || !this.dataSelecionada) return;
 
@@ -107,13 +126,21 @@ export class PesagemComponent implements OnInit {
     }
   }
 
+  /*
+   * Edição
+   * Carrega o item selecionado nos campos do formulário.
+   */
   editarPeso(p: Pesagem): void {
     this.pesagemEmEdicao = p;
     this.novoPeso = p.peso;
     this.dataSelecionada = this.extrairDataParaInput(p.data);
-    this.cdr.detectChanges(); // Atualiza os inputs instantaneamente ao clicar no botão
+    this.cdr.detectChanges();
   }
 
+  /*
+   * Exclusão
+   * Remove uma pesagem após confirmação do usuário.
+   */
   deletarPeso(id: number | undefined): void {
     if (!id) return;
 
@@ -128,11 +155,15 @@ export class PesagemComponent implements OnInit {
     }
   }
 
+  /*
+   * Cancelamento
+   * Limpa o estado de edição e restaura os campos da tela.
+   */
   cancelarEdicao(): void {
     this.pesagemEmEdicao = null;
     this.novoPeso = null;
     this.dataSelecionada = this.obterDataAtualFormatada();
-    this.cdr.detectChanges(); // Limpa os inputs da tela imediatamente
+    this.cdr.detectChanges();
     this.carregarPesagens();
   }
 }
