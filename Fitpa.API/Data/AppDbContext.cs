@@ -1,6 +1,7 @@
 using Fitpa.API.Models;
 using Microsoft.EntityFrameworkCore;
 
+
 namespace Fitpa.API.Data
 {
     /*
@@ -18,8 +19,14 @@ namespace Fitpa.API.Data
         public DbSet<Pesagem> Pesagens { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
 
+        public DbSet<Exercicio> Exercicios { get; set; }
+        public DbSet<Rotina> Rotinas { get; set; }
+        public DbSet<RotinaExercicio> RotinasExercicios { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+            
             modelBuilder.Entity<Pesagem>()
                 .Property(p => p.Id)
                 .HasColumnName("ID");
@@ -30,6 +37,23 @@ namespace Fitpa.API.Data
                 .WithMany(u => u.Pesagens)
                 .HasForeignKey(p => p.UsuarioId)
                 .OnDelete(DeleteBehavior.Cascade); // Exclui pesagens ao remover usuário
+            
+
+            modelBuilder.Entity<Rotina>()
+                .HasMany(r => r.Exercicios)
+                .WithMany(e => e.Rotinas)
+                .UsingEntity<RotinaExercicio>(
+                    j => j.HasOne(re => re.Exercicio)
+                        .WithMany()
+                        .HasForeignKey(re => re.ExercicioId),
+                    j => j.HasOne(re => re.Rotina)
+                        .WithMany()
+                        .HasForeignKey(re => re.RotinaId),
+                    j =>
+                    {
+                        j.HasKey(re => new { re.RotinaId, re.ExercicioId });
+                    });
+            
         }
     }
 }
