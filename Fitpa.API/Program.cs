@@ -94,6 +94,24 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 /*
+ * Execução do Seeder
+ * Popula o banco com dados iniciais caso esteja vazio.
+*/
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        DbSeeder.SeedExercicios(context);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Ocorreu um erro ao popular o banco de dados: {ex.Message}");
+    }
+}
+
+/*
  * Interface visual do Swagger
  * Exibe a documentação apenas no ambiente de desenvolvimento.
  */
