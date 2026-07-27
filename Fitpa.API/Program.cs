@@ -15,7 +15,7 @@ builder.Services.AddCors(options =>
 {
    options.AddPolicy("PermitirFrontEnd", policy =>
    {
-       policy.WithOrigins("http://localhost:4200")
+       policy.WithOrigins("http://localhost:4200", "https://fit-pa.vercel.app")
               .AllowAnyHeader()
               .AllowAnyMethod();
    });
