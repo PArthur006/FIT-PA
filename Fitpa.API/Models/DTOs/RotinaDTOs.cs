@@ -1,9 +1,9 @@
-namespace Fitpa.API.Models
+namespace Fitpa.API.Models.DTOs
 {
     public class RotinaCreateDto
     {
         public string Nome { get; set; } = string.Empty;
-        public List<Exercicio> Exercicios { get; set; } = new List<Exercicio>();
+        public List<RotinaExercicioDto> Exercicios { get; set; } = new List<RotinaExercicioDto>();
     }
 
     public class RotinaExercicioDto
@@ -17,7 +17,7 @@ namespace Fitpa.API.Models
     {
         public int Id { get; set; }
         public string Nome { get; set; } = string.Empty;
-        public List<Exercicio> Exercicios { get; set; } = new List<Exercicio>();
+        public List<RotinaExercicioResponseDto> Exercicios { get; set; } = new List<RotinaExercicioResponseDto>();
     }
 
     public class RotinaExercicioResponseDto
