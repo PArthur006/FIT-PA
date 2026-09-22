@@ -1,188 +1,200 @@
-<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+<div class="max-w-3xl mx-auto p-4 lg:p-6 mb-20">
   
-  <!-- Cabeçalho -->
-  <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <div>
-      <h1 class="text-3xl font-bold text-gray-900">Registrar Treino</h1>
-      <p class="text-gray-500 mt-1">Grave as cargas e repetições do seu treino de hoje.</p>
-    </div>
+  <!-- Header do Treino -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-white mb-2">Treino de Hoje</h1>
+    <input 
+      type="date" 
+      [(ngModel)]="dataTreino" 
+      style="color-scheme: dark;"
+      class="bg-ultra-card text-gray-300 px-4 py-3 rounded-lg w-full border border-gray-800 focus:outline-none focus:border-ultra-purple transition"
+    >
+  </div>
+
+  <!-- Alerta Sucesso -->
+  <div *ngIf="mensagemSucesso" class="mb-4 p-4 bg-ultra-green/10 border border-ultra-green text-ultra-green rounded-lg flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+    </svg>
+    <span class="font-medium">{{ mensagemSucesso }}</span>
+  </div>
+
+  <!-- Lista de Exercícios Executados -->
+  <div class="space-y-3 mb-6">
     
-    <!-- Data do Treino -->
-    <div class="flex items-center gap-2">
-      <label for="dataTreino" class="text-sm font-medium text-gray-700">Data:</label>
-      <input 
-        type="date" 
-        id="dataTreino" 
-        [(ngModel)]="dataTreino" 
-        class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
+    <!-- Estado Vazio -->
+    <div *ngIf="exerciciosExecutados.length === 0" class="bg-ultra-card border border-dashed border-gray-700 rounded-xl p-8 text-center">
+      <p class="text-gray-400">Nenhum exercício adicionado ainda.</p>
+    </div>
+
+    <!-- Cards dos Exercícios -->
+    <div *ngFor="let item of exerciciosExecutados; let i = index" class="bg-ultra-card border border-gray-800 rounded-xl p-4 flex justify-between items-center shadow-md">
+      <div>
+        <h3 class="text-white font-semibold text-lg">{{ item.exercicio.nome }}</h3>
+        <p class="text-gray-500 text-sm mt-1">{{ item.series.length }} séries executadas</p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- Lápis de Edição -->
+        <button (click)="abrirModalEdicao(item, i)" class="p-3 bg-gray-800 text-ultra-purple rounded-full hover:bg-gray-700 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+        </button>
+        <!-- Lixeira -->
+        <button (click)="removerExercicioDoTreino(i)" class="p-3 bg-gray-800 text-red-500 rounded-full hover:bg-gray-700 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Botão Adicionar -->
+    <button (click)="abrirModalBusca()" class="w-full py-4 border-2 border-dashed border-ultra-purple/40 text-ultra-purple rounded-xl font-medium hover:bg-ultra-purple/10 transition flex items-center justify-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+      Adicionar Exercício
+    </button>
+  </div>
+
+  <!-- Botão Salvar Treino Fixo Embaixo (acima da Navbar) -->
+  <div class="fixed bottom-20 left-0 w-full px-4 z-40 lg:relative lg:bottom-0 lg:px-0 lg:mt-8">
+    <button 
+      (click)="salvarTreino()" 
+      [disabled]="exerciciosExecutados.length === 0"
+      class="w-full bg-ultra-green text-black font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(0,230,118,0.3)] disabled:opacity-50 disabled:shadow-none transition">
+      FINALIZAR TREINO
+    </button>
+  </div>
+
+  <!-- ========================================= -->
+  <!-- MODAL 1: BUSCA DO CATÁLOGO (BLUR)         -->
+  <!-- ========================================= -->
+  <div *ngIf="isModalBuscaAberto" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
+    <div class="bg-ultra-card w-full sm:max-w-lg h-[85vh] sm:h-auto sm:max-h-[80vh] rounded-t-2xl sm:rounded-2xl flex flex-col shadow-2xl border border-gray-800">
+      
+      <!-- Cabeçalho Modal Busca -->
+      <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 rounded-t-2xl">
+        <h2 class="text-white font-bold text-lg">Buscar Exercício</h2>
+        <button (click)="fecharModalBusca()" class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="p-4 flex gap-2">
+        <input 
+          type="text" 
+          [(ngModel)]="termoPesquisa" 
+          (ngModelChange)="aplicarFiltros()" 
+          placeholder="Ex: Supino..." 
+          class="flex-1 bg-ultra-dark text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-ultra-purple"
+        >
+        <select 
+          [(ngModel)]="grupoSelecionado" 
+          (ngModelChange)="aplicarFiltros()" 
+          style="color-scheme: dark;"
+          class="bg-ultra-dark text-white px-2 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-ultra-purple"
+        >
+          <option *ngFor="let grupo of gruposMusculares" [value]="grupo">{{ grupo }}</option>
+        </select>
+      </div>
+
+      <!-- Lista Scrollável -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-2">
+        <button 
+          *ngFor="let ex of exerciciosFiltrados" 
+          (click)="selecionarExercicioDoCatalogo(ex)"
+          class="w-full flex justify-between items-center p-4 bg-ultra-dark border border-gray-800 rounded-xl hover:border-ultra-purple/50 transition text-left"
+        >
+          <span class="text-white font-medium">{{ ex.nome }}</span>
+          <span class="text-xs font-semibold px-2 py-1 bg-gray-800 text-ultra-orange rounded-full">{{ ex.grupoMuscular }}</span>
+        </button>
+        <p *ngIf="exerciciosFiltrados.length === 0" class="text-center text-gray-500 py-6">Nenhum exercício encontrado.</p>
+      </div>
     </div>
   </div>
 
-  <!-- Alerta de Sucesso -->
-  <div *ngIf="mensagemSucesso" class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded shadow-sm transition-all">
-    <div class="flex items-center">
-      <span class="font-medium">{{ mensagemSucesso }}</span>
-    </div>
-  </div>
+  <!-- ========================================= -->
+  <!-- MODAL 2: EDIÇÃO DE SÉRIES (BLUR)          -->
+  <!-- ========================================= -->
+  <div *ngIf="isModalEdicaoAberto && exercicioAtualEdicao" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
+    <div class="bg-ultra-card w-full sm:max-w-md h-[90vh] sm:h-auto sm:max-h-[85vh] rounded-t-2xl sm:rounded-2xl flex flex-col shadow-2xl border border-gray-800">
+      
+      <!-- Cabeçalho Modal Edição -->
+      <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 rounded-t-2xl">
+        <div>
+          <span class="text-ultra-orange text-xs font-bold uppercase">{{ exercicioAtualEdicao.exercicio.grupoMuscular }}</span>
+          <h2 class="text-white font-bold text-xl">{{ exercicioAtualEdicao.exercicio.nome }}</h2>
+        </div>
+        <button (click)="fecharModalEdicao()" class="text-gray-400 hover:text-white bg-gray-800 p-2 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+        </button>
+      </div>
 
-  <!-- Grid Principal (Catálogo na Esquerda / Execução na Direita) -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-    
-    <!-- COLUNA ESQUERDA: CATÁLOGO DE EXERCÍCIOS -->
-    <div class="lg:col-span-5 flex flex-col gap-4">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Catálogo de Exercícios</h2>
+      <!-- Tabela de Séries -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
         
-        <!-- Filtros -->
-        <div class="flex flex-col sm:flex-row gap-3 mb-4">
-          <input 
-            type="text" 
-            [(ngModel)]="termoPesquisa" 
-            (ngModelChange)="aplicarFiltros()" 
-            placeholder="Buscar exercício..." 
-            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-          <select 
-            [(ngModel)]="grupoSelecionado" 
-            (ngModelChange)="aplicarFiltros()" 
-            class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          >
-            <option *ngFor="let grupo of gruposMusculares" [value]="grupo">{{ grupo }}</option>
-          </select>
+        <div class="grid grid-cols-12 gap-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center px-2">
+          <div class="col-span-2">Série</div>
+          <div class="col-span-4">Reps</div>
+          <div class="col-span-4">Kg</div>
+          <div class="col-span-2"></div>
         </div>
 
-        <!-- Lista de Exercícios -->
-        <div class="overflow-y-auto max-h-[600px] pr-2 space-y-2">
-          <div *ngFor="let ex of exerciciosFiltrados" class="flex justify-between items-center p-3 hover:bg-gray-50 border border-gray-100 rounded-lg transition">
-            <div>
-              <h3 class="font-medium text-gray-800">{{ ex.nome }}</h3>
-              <span class="text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-600 rounded-full">{{ ex.grupoMuscular }}</span>
-            </div>
-            <button 
-              (click)="adicionarExercicio(ex)" 
-              class="p-2 text-blue-600 hover:text-white hover:bg-blue-600 rounded-md transition"
-              title="Adicionar ao treino"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-              </svg>
-            </button>
+        <div *ngFor="let serie of exercicioAtualEdicao.series; let i = index" class="grid grid-cols-12 gap-3 items-center">
+          <!-- Número Série -->
+          <div class="col-span-2 text-center text-gray-400 font-bold bg-gray-800/50 rounded-lg py-3">
+            {{ i + 1 }}
           </div>
           
-          <div *ngIf="exerciciosFiltrados.length === 0" class="text-center py-8 text-gray-500">
-            Nenhum exercício encontrado.
+          <!-- Input Reps -->
+          <div class="col-span-4">
+            <input 
+              type="number" 
+              min="1" 
+              [(ngModel)]="serie.repeticoes" 
+              class="w-full bg-ultra-dark text-white px-2 py-3 rounded-lg border border-gray-700 text-center text-lg font-semibold focus:outline-none focus:border-ultra-purple"
+            >
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- COLUNA DIREITA: TREINO EM EXECUÇÃO -->
-    <div class="lg:col-span-7 flex flex-col gap-4">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-h-[500px] flex flex-col">
-        
-        <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-          <h2 class="text-lg font-semibold text-gray-800">Exercícios Executados</h2>
-          <span class="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">
-            {{ exerciciosExecutados.length }} selecionados
-          </span>
-        </div>
-
-        <!-- Estado Vazio -->
-        <div *ngIf="exerciciosExecutados.length === 0" class="flex-1 flex flex-col items-center justify-center text-center text-gray-400 p-8">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-          <p>Seu treino está vazio.</p>
-          <p class="text-sm mt-1">Adicione exercícios da lista ao lado para começar.</p>
-        </div>
-
-        <!-- Lista de Exercícios Executados (A Sanfona) -->
-        <div class="space-y-6 flex-1 overflow-y-auto pr-2">
-          <div *ngFor="let item of exerciciosExecutados; let iEx = index" class="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-            
-            <!-- Header do Exercício -->
-            <div class="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
-              <div>
-                <span class="text-sm text-gray-500 font-bold mr-2">#{{ iEx + 1 }}</span>
-                <span class="font-semibold text-gray-800">{{ item.exercicio.nome }}</span>
-              </div>
-              <button (click)="removerExercicio(iEx)" class="text-red-500 hover:text-red-700 transition" title="Remover exercício">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- Tabela de Séries -->
-            <div class="p-4 bg-white space-y-3">
-              <!-- Cabeçalho das colunas (somente se tiver séries) -->
-              <div class="grid grid-cols-12 gap-2 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center" *ngIf="item.series.length > 0">
-                <div class="col-span-2">Série</div>
-                <div class="col-span-4">Repetições</div>
-                <div class="col-span-4">Peso (kg)</div>
-                <div class="col-span-2">Ação</div>
-              </div>
-
-              <!-- Linhas das Séries -->
-              <div *ngFor="let serie of item.series; let iSerie = index" class="grid grid-cols-12 gap-2 items-center text-center">
-                <div class="col-span-2 font-medium text-gray-700">{{ iSerie + 1 }}</div>
-                
-                <div class="col-span-4">
-                  <input 
-                    type="number" 
-                    min="1" 
-                    [(ngModel)]="serie.repeticoes" 
-                    class="w-full px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-blue-500"
-                  >
-                </div>
-                
-                <div class="col-span-4">
-                  <input 
-                    type="number" 
-                    min="0" 
-                    step="0.5" 
-                    [(ngModel)]="serie.peso" 
-                    class="w-full px-2 py-1 border border-gray-300 rounded text-center focus:ring-2 focus:ring-blue-500"
-                  >
-                </div>
-                
-                <div class="col-span-2 flex justify-center">
-                  <button (click)="removerSerie(iEx, iSerie)" class="text-gray-400 hover:text-red-500 transition" title="Excluir série">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Botão Adicionar Série -->
-              <div class="pt-2">
-                <button 
-                  (click)="adicionarSerie(iEx)" 
-                  class="text-sm text-blue-600 font-medium hover:text-blue-800 transition flex items-center justify-center w-full py-2 border border-dashed border-blue-200 rounded-md hover:bg-blue-50"
-                >
-                  + Adicionar Série
-                </button>
-              </div>
-            </div>
-
+          
+          <!-- Input Peso -->
+          <div class="col-span-4">
+            <input 
+              type="number" 
+              min="0" 
+              step="0.5" 
+              [(ngModel)]="serie.peso" 
+              class="w-full bg-ultra-dark text-white px-2 py-3 rounded-lg border border-gray-700 text-center text-lg font-semibold focus:outline-none focus:border-ultra-purple"
+            >
+          </div>
+          
+          <!-- Lixeira Série -->
+          <div class="col-span-2 flex justify-center">
+            <button (click)="removerSerie(i)" class="text-gray-500 hover:text-red-500 p-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
           </div>
         </div>
 
-        <!-- Footer / Salvar -->
-        <div class="mt-6 pt-4 border-t border-gray-100 flex justify-end">
-          <button 
-            (click)="salvarTreino()" 
-            [disabled]="exerciciosExecutados.length === 0"
-            class="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-blue-700 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all w-full sm:w-auto"
-          >
-            Salvar Treino de Hoje
-          </button>
-        </div>
-        
+        <!-- Botão Mais Série -->
+        <button (click)="adicionarSerie()" class="w-full mt-4 py-3 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-700 transition flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          Adicionar Série
+        </button>
+
       </div>
+
+      <!-- Footer Modal Edição -->
+      <div class="p-4 border-t border-gray-800">
+        <button (click)="fecharModalEdicao()" class="w-full bg-ultra-purple text-white font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(157,0,255,0.4)]">
+          CONFIRMAR CARGAS
+        </button>
+      </div>
+
     </div>
-    
   </div>
+
 </div>

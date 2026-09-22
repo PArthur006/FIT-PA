@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { ExercicioService, Exercicio } from '../../../services/exercicio.service';
 import { TreinoService, TreinoCreateDto } from '../../../services/treino.service';
 
-// Tipos locais apenas para a tela (UI)
 interface SerieUI { repeticoes: number; peso: number; }
 interface ExercicioTreinoUI { exercicio: Exercicio; series: SerieUI[]; }
 
@@ -22,8 +21,14 @@ export class NovoTreinoComponent implements OnInit {
   gruposMusculares: string[] = ['Todos', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Bíceps', 'Tríceps', 'Core'];
 
   exerciciosExecutados: ExercicioTreinoUI[] = [];
-  dataTreino: string = new Date().toISOString().split('T')[0]; // Padrão: Hoje (YYYY-MM-DD)
+  dataTreino: string = new Date().toISOString().split('T')[0];
   mensagemSucesso: string = '';
+
+  // Controles de UX (Modais)
+  isModalBuscaAberto: boolean = false;
+  isModalEdicaoAberto: boolean = false;
+  exercicioAtualEdicao: ExercicioTreinoUI | null = null;
+  indexEdicaoAtual: number = -1;
 
   constructor(
     private exercicioService: ExercicioService,
@@ -40,6 +45,7 @@ export class NovoTreinoComponent implements OnInit {
     }
   }
 
+  // --- Filtros e Busca ---
   aplicarFiltros() {
     this.exerciciosFiltrados = this.catalogoCompleto.filter(ex => {
       const batePesquisa = ex.nome.toLowerCase().includes(this.termoPesquisa.toLowerCase());
@@ -48,31 +54,64 @@ export class NovoTreinoComponent implements OnInit {
     });
   }
 
-  adicionarExercicio(exercicio: Exercicio) {
-    this.exerciciosExecutados.push({
-      exercicio: exercicio,
-      series: [{ repeticoes: 10, peso: 0 }] // Ao adicionar, já cria 1 série em branco
-    });
+  // --- Controle de Modais ---
+  abrirModalBusca() {
+    this.isModalBuscaAberto = true;
   }
 
-  removerExercicio(index: number) {
+  fecharModalBusca() {
+    this.isModalBuscaAberto = false;
+    this.termoPesquisa = '';
+    this.aplicarFiltros();
+  }
+
+  selecionarExercicioDoCatalogo(exercicio: Exercicio) {
+    const novoExercicio: ExercicioTreinoUI = {
+      exercicio: exercicio,
+      series: [{ repeticoes: 10, peso: 0 }]
+    };
+    this.exerciciosExecutados.push(novoExercicio);
+    this.fecharModalBusca();
+    
+    // Já abre o modal de edição automaticamente para o usuário preencher a carga
+    this.abrirModalEdicao(novoExercicio, this.exerciciosExecutados.length - 1);
+  }
+
+  abrirModalEdicao(exUI: ExercicioTreinoUI, index: number) {
+    this.exercicioAtualEdicao = exUI;
+    this.indexEdicaoAtual = index;
+    this.isModalEdicaoAberto = true;
+  }
+
+  fecharModalEdicao() {
+    this.isModalEdicaoAberto = false;
+    this.exercicioAtualEdicao = null;
+    this.indexEdicaoAtual = -1;
+  }
+
+  // --- Lógica de Edição de Séries (Dentro do Modal) ---
+  adicionarSerie() {
+    if (this.exercicioAtualEdicao) {
+      this.exercicioAtualEdicao.series.push({ repeticoes: 10, peso: 0 });
+    }
+  }
+
+  removerSerie(indexSerie: number) {
+    if (this.exercicioAtualEdicao) {
+      this.exercicioAtualEdicao.series.splice(indexSerie, 1);
+    }
+  }
+
+  removerExercicioDoTreino(index: number) {
     this.exerciciosExecutados.splice(index, 1);
   }
 
-  adicionarSerie(indexExercicio: number) {
-    this.exerciciosExecutados[indexExercicio].series.push({ repeticoes: 10, peso: 0 });
-  }
-
-  removerSerie(indexExercicio: number, indexSerie: number) {
-    this.exerciciosExecutados[indexExercicio].series.splice(indexSerie, 1);
-  }
-
+  // --- Salvamento ---
   salvarTreino() {
     if (this.exerciciosExecutados.length === 0) return;
 
-    // Converte o modelo visual para o DTO que a API exige
     const dto: TreinoCreateDto = {
-      data: new Date(this.dataTreino).toISOString(), // Converte para o padrão C# (UTC)
+      data: new Date(this.dataTreino).toISOString(),
       exerciciosExecutados: this.exerciciosExecutados.map(exUI => ({
         exercicioId: exUI.exercicio.id,
         series: exUI.series.map(s => ({ repeticoes: s.repeticoes, peso: s.peso }))
@@ -81,7 +120,7 @@ export class NovoTreinoComponent implements OnInit {
 
     this.treinoService.registrarTreino(dto).subscribe({
       next: () => {
-        this.mensagemSucesso = 'Treino salvo e registrado com sucesso!';
+        this.mensagemSucesso = 'Treino Registrado!';
         this.exerciciosExecutados = [];
         setTimeout(() => this.mensagemSucesso = '', 3000);
       },
