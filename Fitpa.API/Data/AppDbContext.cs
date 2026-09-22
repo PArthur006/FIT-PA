@@ -22,6 +22,9 @@ namespace Fitpa.API.Data
         public DbSet<Exercicio> Exercicios { get; set; }
         public DbSet<Rotina> Rotinas { get; set; }
         public DbSet<RotinaExercicio> RotinasExercicios { get; set; }
+        public DbSet<Treino> Treinos { get; set; }
+        public DbSet<TreinoExercicio> TreinosExercicios { get; set; }
+        public DbSet<TreinoSerie> TreinosSeries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +57,17 @@ namespace Fitpa.API.Data
                         j.HasKey(re => new { re.RotinaId, re.ExercicioId });
                     });
             
+            modelBuilder.Entity<TreinoExercicio>()
+                .HasMany(te => te.Series)
+                .WithOne(s => s.TreinoExercicio)
+                .HasForeignKey(s => s.TreinoExercicioId)
+                .OnDelete(DeleteBehavior.Cascade); 
+            
+            modelBuilder.Entity<Treino>()
+                .HasMany(t => t.ExerciciosPraticados)
+                .WithOne(te => te.Treino)
+                .HasForeignKey(te => te.TreinoId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
