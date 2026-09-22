@@ -1,1 +1,64 @@
-<p>pesagem works!</p>
+<div class="max-w-3xl mx-auto p-4 lg:p-6 mb-24">
+  
+  <!-- Cabeçalho -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-white">Controle de Peso</h1>
+    <p class="text-gray-400 mt-1">Acompanhe sua evolução corporal.</p>
+  </div>
+
+  <!-- Card Principal: Nova Pesagem -->
+  <div class="bg-ultra-card border border-gray-800 rounded-2xl p-6 shadow-lg mb-8">
+    <div class="space-y-4">
+      <!-- Input Data -->
+      <div>
+        <label class="block text-sm font-medium text-gray-400 mb-1">Data da Pesagem</label>
+        <input 
+          type="date" 
+          style="color-scheme: dark;"
+          class="w-full bg-ultra-dark text-white px-4 py-3 rounded-xl border border-gray-700 focus:outline-none focus:border-ultra-purple transition"
+        >
+      </div>
+
+      <!-- Input Peso -->
+      <div>
+        <label class="block text-sm font-medium text-gray-400 mb-1">Peso Atual (kg)</label>
+        <input 
+          type="number" 
+          step="0.1"
+          placeholder="Ex: 85.5" 
+          class="w-full bg-ultra-dark text-white px-4 py-3 rounded-xl border border-gray-700 focus:outline-none focus:border-ultra-purple transition text-lg font-semibold"
+        >
+      </div>
+
+      <!-- Botão Registrar -->
+      <button class="w-full mt-2 bg-ultra-green text-black font-bold py-4 rounded-xl shadow-[0_0_15px_rgba(0,230,118,0.3)] hover:scale-[1.02] transition-transform">
+        REGISTRAR PESO
+      </button>
+    </div>
+  </div>
+
+  <!-- Histórico Recente -->
+  <div>
+    <h2 class="text-xl font-bold text-white mb-4">Histórico Recente</h2>
+    
+    <div class="space-y-3">
+      <!-- Item do Histórico (Exemplo) -->
+      <div class="bg-ultra-dark border border-gray-800 rounded-xl p-4 flex justify-between items-center hover:border-gray-700 transition">
+        <div>
+          <span class="block text-2xl font-bold text-white">93.2 <span class="text-sm text-gray-500 font-medium">kg</span></span>
+          <span class="text-sm text-gray-400">21/09/2026</span>
+        </div>
+        
+        <div class="flex gap-2">
+          <button class="p-2 text-gray-500 hover:text-ultra-purple transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+          </button>
+          <button class="p-2 text-gray-500 hover:text-red-500 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
