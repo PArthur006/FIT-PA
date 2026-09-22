@@ -4,6 +4,18 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export interface LoginCredentials {
+  username: string;
+  password: string;
+  mfaCode: string;
+  trustToken: string | null;
+}
+
+export interface LoginResponse {
+  token: string;
+  trustToken: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -22,8 +34,8 @@ export class AuthService {
    * Login
    * Envia as credenciais para a API e inicia a autenticação.
    */
-  login(credenciais: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, credenciais);
+  login(credenciais: LoginCredentials): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credenciais);
   }
 
   /*

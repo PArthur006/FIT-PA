@@ -1,6 +1,7 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 
@@ -13,8 +14,8 @@ import { AuthService } from '../../services/auth/auth.service';
 export class LoginComponent {
   credenciais = { username: '', password: '', mfaCode: '' };
   precisaMfa = false;
-  erro = '';
   carregando = false;
+  erro = '';
 
   constructor(
     private authService: AuthService,
@@ -22,10 +23,6 @@ export class LoginComponent {
     private cdr: ChangeDetectorRef,
   ) {}
 
-  /*
-   * Entrar
-   * Valida os campos básicos, executa o login e trata MFA e erros.
-   */
   entrar() {
     if (!this.credenciais.username || !this.credenciais.password) {
       this.erro = 'Preencha usuário e senha.';
@@ -51,7 +48,7 @@ export class LoginComponent {
         this.carregando = false;
         this.router.navigate(['/pesagem']);
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         console.log('1. Erro interceptado do C#', err);
         this.carregando = false;
 
