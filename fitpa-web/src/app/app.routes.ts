@@ -6,10 +6,10 @@ import { NovoTreinoComponent } from './pages/treinos/novo-treino/novo-treino.com
 import { ListaRotinasComponent } from './pages/treinos/lista-rotinas/lista-rotinas.component';
 
 export const routes: Routes = [
-    { path: 'pesagem', component: PesagemComponent },
+    { path: '', redirectTo: 'pesagem', pathMatch: 'full' },
     { path: 'login', component: LoginComponent },
+    { path: 'pesagem', component: PesagemComponent },
     { path: 'nova-rotina', component: RotinasComponent },
-    { path: '', redirectTo: '/login', pathMatch: 'full' },
     { path: 'novo-treino', component: NovoTreinoComponent },
-    { path: 'lista-rotinas', loadComponent: () => import('./pages/treinos/lista-rotinas/lista-rotinas.component').then(m => m.ListaRotinasComponent) }
+    { path: 'lista-rotinas', component: ListaRotinasComponent },
 ];
